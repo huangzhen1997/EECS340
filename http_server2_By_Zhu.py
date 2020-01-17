@@ -34,7 +34,7 @@ def http_server(PORT):
         server.setblocking(False)
         server.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
         server.bind(("", PORT))
-        server.listen(10)
+        server.listen(5)
         inputs = [server]
         outputs = []
         message_queue = {}
@@ -54,6 +54,7 @@ def http_server(PORT):
                     recvByteData = entity.recv(2048)
                     if recvByteData != b'':
                         recvData += recvByteData.decode("utf-8")
+                        print('recvData: ', recvData)
                         ## debug info
                         #print(recvData)
                         if (len(recvData.split('\r\n\r\n')) > 1):
@@ -82,12 +83,12 @@ def http_server(PORT):
                 except:
                     outputs.remove(entity)
                 else:
-                    entity.sendall(response.encode("utf-8"))
-                    print ('closing', addr)
-                    if entity in outputs:
-                        outputs.remove(entity)
-                    inputs.remove(entity)
-                    entity.close()
+                    entity.send(response.encode("utf-8"))
+                    # print ('closing', addr)
+                    # if entity in outputs:
+                    #     outputs.remove(entity)
+                    # inputs.remove(entity)
+                    # entity.close()
             
             for entity in exceptional:
                 inputs.remove(entity)
