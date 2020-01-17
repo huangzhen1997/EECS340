@@ -44,38 +44,23 @@ def http_server(PORT):
             readable, writable, exceptional = select.select(inputs, outputs, inputs)
             for entity in readable:
                 if entity is server:
-                    conn, addr = entity.accept()
-                    #debug info
-                    print('Connected by: ', addr)   
-                    conn.setblocking(False)
+                    conn, addr = entity.accept()  
+                    conn.setblocking(True)
                     inputs.append(conn)
                     message_queue[conn] = queue.Queue()
                 else:
                     recvByteData = entity.recv(2048)
-                    if recvByteData != b'':
+                    if recvByteData:
                         recvData += recvByteData.decode("utf-8")
-                        print('recvData: ', recvData)
-                        ## debug info
-                        #print(recvData)
                         if (len(recvData.split('\r\n\r\n')) > 1):
                             header = recvData.split('\r\n\r\n', 1)[0] + '\r\n\r\n'
                             recvData = recvData.split('\r\n\r\n', 1)[1]
                             method, file = parseHeader(header)
-                            ## debug info
-                            print('Method: ', method)                           
-                            print('Request file: ', file)
                             response = buildHttpPackage(file)
                             message_queue[entity].put(response)
+                        
                         if entity not in outputs:
                             outputs.append(entity)
-                    else:
-                        print ('closing', addr)
-                        if entity in outputs:
-                            outputs.remove(entity)
-                        inputs.remove(entity)
-                        entity.close()
-
-                        del message_queue[entity]
 
             for entity in writable:
                 try:
@@ -84,11 +69,10 @@ def http_server(PORT):
                     outputs.remove(entity)
                 else:
                     entity.send(response.encode("utf-8"))
-                    # print ('closing', addr)
-                    # if entity in outputs:
-                    #     outputs.remove(entity)
-                    # inputs.remove(entity)
-                    # entity.close()
+                    if entity in outputs:
+                        outputs.remove(entity)
+                    inputs.remove(entity)
+                    entity.close()
             
             for entity in exceptional:
                 inputs.remove(entity)
