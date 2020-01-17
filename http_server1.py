@@ -30,17 +30,18 @@ def response(req):
     path = parse(req)
     
     output='HTTP/1.1 '
-    if(os.path.exists(path)):
-        if(path.split('.')[-1]!='html' and path.split('.')[-1]!='htm'):
-            output+='403 Forbidden\r\nConnection: Close\r\n\r\n'
+    if(path.split('.')[-1]!='html' and path.split('.')[-1]!='htm'):
+        output+='403 Forbidden\r\nConnection: Close\r\n\r\n'
+        return output
+    else:
+         if(not os.path.exists(path)):
+            output+='404 Not Found\r\nConnection: Close\r\n\r\n'
             return output
-        else:
+         else:
             body=load_file(path)
             output+='200 OK\r\nContent-Length: '+str(len(body))+'\r\nConnection: close\r\nContent-Type: text/html; charset=UTF-8\r\n'+body
             return output
-    else:
-        output+='404 Not Found\r\nConnection: Close\r\n\r\n'
-        return output
+        
         
     
 
@@ -56,5 +57,6 @@ def connection(port):
         request = receive(clientsocket)
         resp = response(request)
         clientsocket.send(bytes(resp,'utf-8'))
-        clientsocket.close()        
+        clientsocket.close()
+        
 connection(int(sys.argv[1]))
