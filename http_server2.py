@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import socket
 import os
 import sys
@@ -31,10 +33,12 @@ def response(req):
     output='HTTP/1.1 '
     if(path.split('.')[-1]!='html' and path.split('.')[-1]!='htm'):
         output+='403 Forbidden\r\nConnection: Close\r\n\r\n'
+        output+='<html><head><title>403 Forbidden</title></head><body><h1>Forbidden</h1></body></html>'
         return output
     else:
          if(not os.path.exists(path)):
             output+='404 Not Found\r\nConnection: Close\r\n\r\n'
+            output+='<html><head><title>404 Not Found</title></head><body><h1>Not Found</h1><p>The requested file was not found on this server.</p></body></html>'
             return output
          else:
             body=load_file(path)
