@@ -45,6 +45,7 @@ def host1(listen_port, remote_port):
             s.send(buf.encode('utf-8'))
             buf = ""
         i += 1
+    s.close()
     print("CHECK THE OTHER SCRIPT FOR STAGE 2 RESULTS.")
 
         
@@ -57,11 +58,12 @@ def host2(listen_port, remote_port):
         print("sending {%s}" % buf)
         s.send(buf.encode('utf-8'))
     receive(s)
+    s.close()
     print("STAGE 2 TEST PASSED!")
 
 
 def main():
-    lossy_socket.sim = lossy_socket.SimulationParams(loss_rate=0.05, corruption_rate=0.0, max_delivery_delay=0.01)
+    lossy_socket.sim = lossy_socket.SimulationParams(loss_rate=0.02, corruption_rate=0.0, max_delivery_delay=0.01)
 
     if len(sys.argv) < 4:
         print("usage is: python3 test.py [port1] [port2] [1|2]")

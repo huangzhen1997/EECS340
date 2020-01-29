@@ -29,6 +29,7 @@ class Streamer:
         self.recv_timer = {}
 
         # new code Part3
+        self.FIN_timer = {}
 
 
     def send(self, data_bytes: bytes):
@@ -130,14 +131,44 @@ class Streamer:
         while (True):
             try:
                 data, addr = self.socket.recvfrom()
-                self.recv_buffer[int(data.decode().split(' ', 1)[0])] = data.decode().split(' ', 1)[1].encode('utf-8')
-                flag = int(data.decode().split(' ', 1)[0]) + 1
+                if (data.decode() != 'FIN'):
+                    self.recv_buffer[int(data.decode().split(' ', 1)[0])] = data.decode().split(' ', 1)[1].encode('utf-8')
+                    flag = int(data.decode().split(' ', 1)[0]) + 1
+                    print("send ACK: ", flag)
+                    self.socket.sendto(str(flag).encode('utf-8'), (self.dst_ip, self.dst_port))
+                elif (data.decode() == 'FIN'):
+                    self.socket.sendto(b'DONE', (self.dst_ip, self.dst_port))
+                    
             except InterruptedError:
                 print("Debug info: InterruptedError")
                 continue
             else:
-                print("send ACK: ", flag)
-                self.socket.sendto(str(flag).encode('utf-8'), (self.dst_ip, self.dst_port))
-
                 return True
+
+    def sendFIN(self):
+        self.socket.sendto(b'FIN', (self.dst_ip, self.dst_port))
+        self.FIN_timer[0] = Timer(WAIT, self.sendFIN)
+        self.FIN_timer[0].start()
+
+    def close(self) -> None:
+        """Cleans up. It should block (wait) until the Streamer is done with all
+           the necessary ACKs and retransmissions"""
+        # your code goes here, especially after you add ACKs and retransmissions.
+
+        self.socket.sendto(b'FIN', (self.dst_ip, self.dst_port))
+        #self.FIN_timer[0] = Timer(WAIT, self.sendFIN)
+        #self.FIN_timer[0].start()
+
+        status = 'wait1'
+        data, addr = self.socket.recvfrom()
+        while (status != 'close_wait'):
+            if data == b'DONE':
+                #self.FIN_timer[0].cancel()
+                #del self.FIN_timer[0]
+                status = 'time_wait'
+                print(status)
+            if data == b'FIN':
+                status = 'close_wait'
+                self.socket.sendto(b'DONE', (self.dst_ip, self.dst_port))
+                print(status)
 
