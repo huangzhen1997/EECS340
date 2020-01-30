@@ -30,6 +30,8 @@ class Streamer:
 
         # new code Part3
         self.FIN_timer = {}
+        self.wantToClose = False
+        self.peerWantToClose = False
 
 
     def send(self, data_bytes: bytes):
@@ -156,19 +158,28 @@ class Streamer:
         # your code goes here, especially after you add ACKs and retransmissions.
 
         self.socket.sendto(b'FIN', (self.dst_ip, self.dst_port))
-        #self.FIN_timer[0] = Timer(WAIT, self.sendFIN)
-        #self.FIN_timer[0].start()
+        self.FIN_timer[0] = Timer(WAIT, self.sendFIN)
+        self.FIN_timer[0].start()
 
-        status = 'wait1'
         data, addr = self.socket.recvfrom()
-        while (status != 'close_wait'):
+        while (self.wantToClose == False or self.peerWantToClose == False):
             if data == b'DONE':
-                #self.FIN_timer[0].cancel()
-                #del self.FIN_timer[0]
-                status = 'time_wait'
-                print(status)
+                self.FIN_timer[0].cancel()
+                del self.FIN_timer[0]
+                self.wantToClose = True
+                print ("!!!!!Receive DONE!!!!!")
             if data == b'FIN':
-                status = 'close_wait'
+                self.peerWantToClose = True
                 self.socket.sendto(b'DONE', (self.dst_ip, self.dst_port))
-                print(status)
+                print ("!!!!!Receive FIN!!!!!")
+            if self.wantToClose and self.peerWantToClose:
+                break
+            else:
+                data, addr = self.socket.recvfrom()
+
+        if 0 in self.FIN_timer:
+            del self.FIN_timer[0]
+
+        
+
 
