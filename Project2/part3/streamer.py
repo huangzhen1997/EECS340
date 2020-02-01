@@ -113,7 +113,7 @@ class Streamer:
         
         # these statement for debug
         while (future.running()):
-            sleep(0.01)
+            continue
 
         # if(future.running()):
         #     return b''
